@@ -1,4 +1,40 @@
-name: CD - Build & Push to Docker Hub
+# # Parallel pipeline
+# name: CD - Build & Push to Docker Hub
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   build-and-push:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Build Docker image
+#         run: |
+#           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:${{ github.sha }} .
+#           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:${{ github.sha }} \
+#             ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:latest
+
+#       - name: Push to Docker Hub
+#         run: |
+#           docker push ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:${{ github.sha }}
+#           docker push ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:latest
+
+
+
+#Sequential pipeline
+name: CD - Multi Environment Deploy
 
 on:
   push:
@@ -6,9 +42,9 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  deploy-dev:
     runs-on: ubuntu-latest
-
+    environment: dev
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,13 +55,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build & Push image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:${{ github.sha }} .
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:${{ github.sha }} \
             ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:latest
-
-      - name: Push to Docker Hub
-        run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/calc-app:latest
+
+      - name: Deploy to Dev
+        run: echo "Deployed to Dev environment"
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    needs: deploy-dev
+    steps:
+      - name: Deploy to Staging
+        run: echo "Deployed to Staging environment"
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production
+    needs: deploy-staging
+    steps:
+      - name: Deploy to Production
+        run: echo "Deployed to Production environment"
