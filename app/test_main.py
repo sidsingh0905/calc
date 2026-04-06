@@ -31,4 +31,3 @@ def test_divide(client):
 def test_divide_by_zero(client):
     res = client.get('/divide?a=10&b=0')
     assert res.status_code == 400
-    
